@@ -1,0 +1,4 @@
+while(<>) {
+	y/aeiouAEIOU/*/;
+	print;
+}

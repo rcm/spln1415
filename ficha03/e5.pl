@@ -8,6 +8,7 @@ use Data::Dumper;
 sub indent {
   my ($count, $i) = (0,0);
 
+  my $extra = $_{extra} // 0;
   until( ((caller($i))[3]) eq '' ){
     if( ((caller($i))[3]) eq 'main::dumpa' ){
       $count++;
@@ -112,4 +113,21 @@ sub ex2 {
   print "\n\n-------\n\n";
   print dumpa($ola);
 }
-# ex2;
+#ex2;
+
+
+################################################
+# um exemplo que não funciona como o Dumper
+# porque o dumpa não toma nota das referências
+# para as reutilizar depois
+
+sub ex3 {
+  my $ola = {ola => {zbr => \'yes!', foo => [1..5]}, 'ole' => [2,\60]};
+  
+  $ola->{'ole'}->[2] = $ola->{ola};
+
+  print Dumper($ola);
+  print "\n\n-------\n\n";
+  print dumpa($ola);
+}
+#ex3;

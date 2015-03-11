@@ -18,7 +18,7 @@ sub indent {
 
   $count-- if ((caller(3))[3]) eq 'main::dumpRef';
 
-  return "      " . "   "x($count+%_{extra});
+  return "      " . "   "x($count+$extra);
 }
 
 sub dumpa {

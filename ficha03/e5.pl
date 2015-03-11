@@ -147,7 +147,7 @@ sub ex3 {
 
   exemplificar($ola)
 }
-#ex3;
+ex3;
 
 ################################################
 # um exemplo em que nenhum dos dois permite a
@@ -160,4 +160,4 @@ sub ex4 {
 
   exemplificar({x=>$x,y=>$y})
 }
-ex4;
+#ex4;

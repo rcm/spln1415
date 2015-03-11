@@ -18,12 +18,24 @@ sub indent {
 
   $count-- if ((caller(3))[3]) eq 'main::dumpRef';
 
-  return "      " . "   "x($count+$extra);
+  return "     " . "   "x($count+$extra);
 }
 
 sub dumpa {
-  my ($ref) = @_;
-  #print "Dumper: ", Dumper($ref), "\n\n-------\n\n";
+  my ($ref,$path,$seen) = @_;
+
+  # caso seja uma referência
+  unless(ref $ref eq ''){
+    # verificar se a referência é conhecida
+    $seen = {} unless defined $seen;
+    $path = '$VAR1' unless defined $path;
+    foreach my $key (keys %$seen){
+      return $seen->{$key} if $key eq $ref;
+    }
+
+    # adicionar à lista de referências conhecidas
+    $seen->{$ref} = $path;
+  }
 
   my %swi = ( 'SCALAR' => \&dumpScalar
             , 'ARRAY'  => \&dumpArray
@@ -33,34 +45,37 @@ sub dumpa {
             );
   
   unless( ((caller(2))[3]) eq 'main::dumpa' ){
-    "\$DUMPA = " . $swi{ref $ref}($ref) . ";\n";
+    "\$VAR1 = " . $swi{ref $ref}($ref,$path,$seen) . ";\n";
   }else{
-    $swi{ref $ref}($ref);
+    $swi{ref $ref}($ref,$path,$seen);
   }
 }
 
 sub dumpRef {
-  my ($ref) = @_;
-  "\\" . dumpa($$ref)
+  my ($ref,$path,$seen) = @_;
+  "\\" . dumpa($$ref,"\\" . $path,$seen)
 }
 
 sub dumpArray {
-  my ($ref) = @_;
+  my ($ref,$path,$seen) = @_;
   my $str = "[\n";
-  $str .= indent(extra => 1) . "  " . dumpa($_) . ",\n" for(@$ref);
+
+  for my $i (0 .. $#$ref) {
+    $str .= indent(extra => 1) . "  " . dumpa($ref->[$i],$path."->[$i]",$seen) . ",\n";
+  }
+
   $str =~ s/,\n$/\n/;
   $str .= indent() . "]";
   $str
 }
 
 sub dumpHash {
-  my ($ref) = @_;
-  keys %$ref; # reset the internal iterator so a prior each() doesn't affect the loop
+  my ($ref,$path,$seen) = @_;
+  return '{}' unless %$ref;
 
   my $str = "{\n";
-
-  while(my($k, $v) = each %$ref) {
-    $str .= indent(extra => 1) . "  " . dumpa($k) . " => " . dumpa($v) . ",\n";
+  foreach my $k (keys %$ref){
+    $str .= indent(extra => 1) . "  " . dumpa($k,$path,$seen) . " => " . dumpa($ref->{$k},$path."->{$k}",$seen) . ",\n";
   }
   $str =~ s/,\n$/\n/;
 
@@ -87,47 +102,62 @@ sub dumpNonref {
   }
 }
 
+sub exemplificar{
+  my ($arg) = @_;
+
+  print Dumper($arg);
+  print "\n\n-------\n\n";
+  print dumpa($arg);
+}
+
 
 ################################################
 # exemplo que funciona como o Dumper
 
 sub ex1 {
   my $ola = {ola => \'yes!', 'ole' => \[2,\60]};
-
-  print Dumper($ola);
-  print "\n\n-------\n\n";
-  print dumpa($ola);
+  exemplificar($ola)
 }
-ex1;
+#ex1;
 
 
 ################################################
-# exemplo com referência cíclica (não funciona)
-# 
+# exemplo com referência cíclica que funciona
+# como o Dumper
+
 sub ex2 {
   my $ola;
   my $ole = [3, \$ola];
   $ola = $ole;
 
-  print Dumper($ola);
-  print "\n\n-------\n\n";
-  print dumpa($ola);
+  exemplificar($ola)
 }
 #ex2;
 
 
 ################################################
-# um exemplo que não funciona como o Dumper
-# porque o dumpa não toma nota das referências
-# para as reutilizar depois
+# um exemplo que funciona quase como o Dumper
+# a diferença está nas chaves das hash, que não
+# são tratadas.
 
 sub ex3 {
   my $ola = {ola => {zbr => \'yes!', foo => [1..5]}, 'ole' => [2,\60]};
   
   $ola->{'ole'}->[2] = $ola->{ola};
 
-  print Dumper($ola);
-  print "\n\n-------\n\n";
-  print dumpa($ola);
+  exemplificar($ola)
 }
 #ex3;
+
+################################################
+# um exemplo em que nenhum dos dois permite a
+# posterior importação dos dados
+
+sub ex4 {
+  my $x = {};
+  my $y = \{};
+  $x->{$y} = $y;
+
+  exemplificar({x=>$x,y=>$y})
+}
+ex4;

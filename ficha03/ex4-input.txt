@@ -1,0 +1,5 @@
+joana	li2	17
+carlos	pl	16
+joana	li2	12
+carlos	pi	13
+luisa	tc	16

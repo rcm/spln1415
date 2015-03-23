@@ -4,9 +4,16 @@
 use strict;
 
 my @linhas;
+my %uniq;
 
-while(my $linha = <>){
-  push @linhas,$linha unless (grep {$_ eq $linha} @linhas)
+while(<>){
+  $uniq{$_} = 1;
+  push @linhas,$_;
 }
 
-print @linhas
+foreach(@linhas){
+  if($uniq{$_}){
+    $uniq{$_}--;
+    print $_;
+  }
+}

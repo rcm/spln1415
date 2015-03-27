@@ -1,0 +1,8 @@
+abc=def
+volume=11
+title=Differential_Evolution
+author=R_Storn_and_K_Price
+type=article
+pages=341_359
+journal=Journal_of_Global_Optimization
+key=storn_de_articl

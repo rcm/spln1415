@@ -3,17 +3,9 @@
 
 use strict;
 
-my @linhas;
 my %uniq;
 
 while(<>){
+  print unless $uniq{$_};
   $uniq{$_} = 1;
-  push @linhas,$_;
-}
-
-foreach(@linhas){
-  if($uniq{$_}){
-    $uniq{$_}--;
-    print $_;
-  }
 }

@@ -12,9 +12,9 @@ my ($key,%bib,$val,$inside);
 while(<>){
   chomp;
   if(m/@\w+\{(.*?),/i){
-    $inside = {};
+    $inside = {'key' => $1};
     $bib{$1} = $inside;
-  }elsif(($key,$val) = m/^\s*['"`´’]?(\w+)['"`´’]?\s*=\s*['"`´’\{]?(.+?)['"`´’\}]?,?\s*$/i){
+  }elsif(($key,$val) = m/^\s*(\w+)\s*=\s*['"`´’\{]?(.+?)['"`´’\}]?,?\s*$/i){
     $inside->{$key} = $val;
   }
 }

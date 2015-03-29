@@ -3,10 +3,9 @@
 
 use strict;
 
-my @linhas;
+my %uniq;
 
-while(my $linha = <>){
-  push @linhas,$linha unless (grep {$_ eq $linha} @linhas)
+while(<>){
+  print unless $uniq{$_};
+  $uniq{$_} = 1;
 }
-
-print @linhas

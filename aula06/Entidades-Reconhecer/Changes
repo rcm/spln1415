@@ -1,0 +1,6 @@
+Revision history for Perl extension Entidades::Reconhecer.
+
+0.01  Fri Mar 27 16:35:35 2015
+	- original version; created by h2xs 1.23 with options
+		-XAn Entidades::Reconhecer
+

@@ -1,0 +1,6 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Entidades-Reconhecer.t
+lib/Entidades/Reconhecer.pm

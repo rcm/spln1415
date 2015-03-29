@@ -32,7 +32,7 @@ sub testar {
 	}
 
 	$t->reconhecer($texto);
-	is_deeply([$t->entidades()], $resultado) or diag explain $t;
+	is_deeply([$t->entidades()], [sort @$resultado]) or diag explain [$t, [$t->entidades()], [sort @$resultado]];
 }
 
 can_ok('Entidades::Reconhecer', qw(new reconhecer preposicao ignorar entidades));
@@ -40,9 +40,18 @@ can_ok('Entidades::Reconhecer', qw(new reconhecer preposicao ignorar entidades))
 my $t = Entidades::Reconhecer->new();
 isa_ok($t, 'Entidades::Reconhecer');
 
-testar('O Primeiro Ministro foi ao mercado', ['Primeiro Ministro']);
 testar('O Primeiro Ministro foi à Assembleia da Republica', ['Assembleia da Republica', 'Primeiro Ministro']);
 testar('Outros dois processos em curso contra funcionários da AT dizem respeito à consulta de dados de Cavaco Silva e de Paulo Portas, diz o Sindicato dos Trabalhadores dos Impostos.', ['AT', 'Cavaco Silva', 'Paulo Portas', 'Sindicato dos Trabalhadores dos Impostos']);
+testar('Águas de Portugal tem tido "gestão ruinosa"', ['Águas de Portugal']);
+testar('Águas de Portugal tem tido "gestão ruinosa", acusa Manuel Machado', ['Manuel Machado', 'Águas de Portugal']);
+testar('Segundo Manuel Machado, Águas de Portugal tem tido "gestão ruinosa"', ['Manuel Machado', 'Águas de Portugal'], [qw{Segundo}]);
+testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Associação de Professores de Português', 'Ensino Básico', 'Filomena Viegas', 'Ministério da Educação']);
+testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Educação e Ciência', 'Ensino Básico', 'Filomena Viegas'], undef, [qw(e)]);
+testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Associação de Professores de Português', 'Ensino Básico', 'Filomena Viegas', 'Educação e Ciência'], undef, [qw(e de)]);
+testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Ensino Básico', 'Filomena Viegas', 'Ministério da Educação e Ciência'], undef, [qw(e da)]);
+testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Associação de Professores de Português', 'Ensino Básico', 'Filomena Viegas', 'Ministério da Educação e Ciência'], undef, [qw(e de da)]);
+
+
 testar(<<EOF, ['António Costa', 'Comissão Europeia', 'Congresso do Partido Socialista Europeu', 'François Hollande', 'João Galamba', 'Matteo Renzi', 'Nuno Sá Lourenço', 'PS', 'Tratado Orçamental'], [qw{PÚBLICO}]);
 Socialistas preparam a sua “leitura inteligente do Tratado Orçamental”
 

@@ -69,6 +69,7 @@ sub preposicao {
 sub reconhecer {
 	my ($self, $texto) = @_;
 
+	my @entidades;
 	for my $str (split /\.\s*/, $texto) {
 		while($str =~ m/$self->{regexp}/g) {
 			my $ent = $&;
@@ -77,12 +78,17 @@ sub reconhecer {
 				shift @words;
 				shift @words;
 				$ent = join "", @words;
-				$self->{entidades}{$ent}++ if $ent =~ m/$self->{regexp}/;
+ 				if($ent =~ m/$self->{regexp}/) {
+					$self->{entidades}{$ent}++;
+					push @entidades, $ent;
+				}
 			} else {
 				$self->{entidades}{$ent}++;
+				push @entidades, $ent;
 			}
 		}
 	}
+	@entidades;
 }
 
 sub entidades {

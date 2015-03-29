@@ -11,6 +11,7 @@ use warnings;
 #use Test::More tests => 13;
 #use Test::More qw(no_plan);
 use Test::More;
+use Test::Differences;
 
 use utf8::all;
 BEGIN { use_ok('Entidades::Reconhecer') };
@@ -21,38 +22,43 @@ BEGIN { use_ok('Entidades::Reconhecer') };
 # its man page ( perldoc Test::More ) for help writing this test script.
 
 sub testar {
-	my ($texto, $resultado, $ignorar, $prep) = @_;
+	my ($texto, $resultado, %opcoes) = @_;
+	my $ignorar = $opcoes{ignorar};
+	my $prep = $opcoes{prep};
+	my $desc = $opcoes{descricao};
 
 	my $t = Entidades::Reconhecer->new();
-	$t->ignorar(@$ignorar) if defined $ignorar;
+	isa_ok($t, 'Entidades::Reconhecer', 'Objeto é do tipo certo');
+
+	ok($t->ignorar(@$ignorar), 'Invocar corretamente a função ignorar') if defined $ignorar;
 	if(defined $prep) {
-		$t->preposicao(@$prep) 
+		ok($t->preposicao(@$prep), 'Invocar corretamente a função preposicao');
 	} else {
-		$t->preposicao(qw(da de do das dos));
+		ok($t->preposicao(qw(da de do das dos)), 'Invocar corretamente a função preposicao');
 	}
 
-	$t->reconhecer($texto);
-	is_deeply([$t->entidades()], [sort @$resultado]) or diag explain [$t, [$t->entidades()], [sort @$resultado]];
+	ok($t->reconhecer($texto), 'Invocar corretamente a função reconhecer');
+	#is_deeply([$t->entidades()], [sort @$resultado]) or diag explain [$t, [$t->entidades()], [sort @$resultado]];
+	my $desc_test = 'comparar as entidades obtidas com as esperadas';
+	$desc_test .= sprintf " no teste '%s'", $desc if defined $desc;
+	eq_or_diff([$t->entidades()], [sort @$resultado], $desc_test);
 }
 
 can_ok('Entidades::Reconhecer', qw(new reconhecer preposicao ignorar entidades));
 
-my $t = Entidades::Reconhecer->new();
-isa_ok($t, 'Entidades::Reconhecer');
-
-testar('O Primeiro Ministro foi à Assembleia da Republica', ['Assembleia da Republica', 'Primeiro Ministro']);
-testar('Outros dois processos em curso contra funcionários da AT dizem respeito à consulta de dados de Cavaco Silva e de Paulo Portas, diz o Sindicato dos Trabalhadores dos Impostos.', ['AT', 'Cavaco Silva', 'Paulo Portas', 'Sindicato dos Trabalhadores dos Impostos']);
-testar('Águas de Portugal tem tido "gestão ruinosa"', ['Águas de Portugal']);
-testar('Águas de Portugal tem tido "gestão ruinosa", acusa Manuel Machado', ['Manuel Machado', 'Águas de Portugal']);
-testar('Segundo Manuel Machado, Águas de Portugal tem tido "gestão ruinosa"', ['Manuel Machado', 'Águas de Portugal'], [qw{Segundo}]);
+testar('O Primeiro Ministro foi à Assembleia da Republica', ['Assembleia da Republica', 'Primeiro Ministro'], descricao => 'duas entidades, uma com preposição');
+testar('Outros dois processos em curso contra funcionários da AT dizem respeito à consulta de dados de Cavaco Silva e de Paulo Portas, diz o Sindicato dos Trabalhadores dos Impostos.', ['AT', 'Cavaco Silva', 'Paulo Portas', 'Sindicato dos Trabalhadores dos Impostos'], descricao => 'várias entidades incluindo siglas');
+testar('Águas de Portugal tem tido "gestão ruinosa"', ['Águas de Portugal'], descricao => 'Uma entidade com preposição e acentos');
+testar('Águas de Portugal tem tido "gestão ruinosa", acusa Manuel Machado', ['Manuel Machado', 'Águas de Portugal'], descricao => 'Duas entidades com preposição e acentos');
+testar('Segundo Manuel Machado, Águas de Portugal tem tido "gestão ruinosa"', ['Manuel Machado', 'Águas de Portugal'], ignorar => [qw{Segundo}], descricao => 'ignorar palavras');
 testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Associação de Professores de Português', 'Ensino Básico', 'Filomena Viegas', 'Ministério da Educação']);
-testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Educação e Ciência', 'Ensino Básico', 'Filomena Viegas'], undef, [qw(e)]);
-testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Associação de Professores de Português', 'Ensino Básico', 'Filomena Viegas', 'Educação e Ciência'], undef, [qw(e de)]);
-testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Ensino Básico', 'Filomena Viegas', 'Ministério da Educação e Ciência'], undef, [qw(e da)]);
-testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Associação de Professores de Português', 'Ensino Básico', 'Filomena Viegas', 'Ministério da Educação e Ciência'], undef, [qw(e de da)]);
+testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Educação e Ciência', 'Ensino Básico', 'Filomena Viegas'], prep =>[qw(e)]);
+testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Associação de Professores de Português', 'Ensino Básico', 'Filomena Viegas', 'Educação e Ciência'], prep => [qw(e de)]);
+testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Ensino Básico', 'Filomena Viegas', 'Ministério da Educação e Ciência'], prep => [qw(e da)]);
+testar('Filomena Viegas, da direcção da Associação de Professores de Português, considera “lamentável” que, “apesar de todas as recomendações em contrário, o Ministério da Educação e Ciência tenha colocado à discussão pública um programa de Português para o Ensino Básico “fortemente prescritivo, que vai empobrecer a educação e promover a retenção escolar dos alunos”.',['Associação de Professores de Português', 'Ensino Básico', 'Filomena Viegas', 'Ministério da Educação e Ciência'], prep => [qw(e de da)]);
 
 
-testar(<<EOF, ['António Costa', 'Comissão Europeia', 'Congresso do Partido Socialista Europeu', 'François Hollande', 'João Galamba', 'Matteo Renzi', 'Nuno Sá Lourenço', 'PS', 'Tratado Orçamental'], [qw{PÚBLICO}]);
+testar(<<EOF, ['António Costa', 'Comissão Europeia', 'Congresso do Partido Socialista Europeu', 'François Hollande', 'João Galamba', 'Matteo Renzi', 'Nuno Sá Lourenço', 'PS', 'Tratado Orçamental'], ignorar => [qw{PÚBLICO}]);
 Socialistas preparam a sua “leitura inteligente do Tratado Orçamental”
 
 Nuno Sá Lourenço
@@ -80,7 +86,7 @@ Os contactos e a preparação destas propostas fazem também luz sobre a estrat�
 E foi após esse encontro que Costa admitiu que para construir o seu programa eleitoral tinha de o testar antes na Europa. “Considero que o princípio da confiança e da credibilidade é o valor mais importante que pode existir na política e entendo que, no processo de construção de um programa de Governo, é preciso avaliar as condições de execução desse programa, designadamente ao nível europeu."
 EOF
 
-testar(<<'EOF',['Ayo Johnson', 'Baidu Lawan', 'Birin Bolawa', 'Birin Fulani', 'Boko Haram', 'CNN', 'Christian Purefoy', 'Deutsche Bank', 'Energy Information Administration', 'Felix Aladeotan', 'House of Assembly', 'Human Rights Watch', 'INEC', 'ISIS', 'Ibrahim Adamu', 'Independent National Electoral Commission', 'Michael Martinez', 'Muhammadu Buhari', 'Nigeria Independent Electoral Commission', 'Nigerian Borno', 'Nigerian Cyber Army', 'President Goodluck Jonathan', 'President Jonathan', 'South Africa', 'Stephanie Busari', 'TeaM Nigerian Cyber Army', 'Victoria Island'], [qw{Why Many By}], [qw(of)]);
+testar(<<'EOF',['Ayo Johnson', 'Baidu Lawan', 'Birin Bolawa', 'Birin Fulani', 'Boko Haram', 'CNN', 'Christian Purefoy', 'Deutsche Bank', 'Energy Information Administration', 'Felix Aladeotan', 'House of Assembly', 'Human Rights Watch', 'INEC', 'ISIS', 'Ibrahim Adamu', 'Independent National Electoral Commission', 'Michael Martinez', 'Muhammadu Buhari', 'Nigeria Independent Electoral Commission', 'Nigerian Borno', 'Nigerian Cyber Army', 'President Goodluck Jonathan', 'President Jonathan', 'South Africa', 'Stephanie Busari', 'TeaM Nigerian Cyber Army', 'Victoria Island'], ignorar => [qw{Why Many By}], prep => [qw(of)]);
 Nigerian election extended one day in some areas amid problems
 
 By Michael Martinez, Christian Purefoy and Stephanie Busari, CNN
@@ -208,7 +214,7 @@ To avoid a runoff, a candidate must get more than 50% of the vote and at least a
 If no candidate wins, a runoff election will be held seven days later. 
 EOF
 
-testar(<<EOF, ['Associação Nacional de Municípios Portugueses', 'Câmara de Coimbra', 'Manuel Machado', 'Ministério do Ambiente', 'Miranda do Corvo', 'SIMLIS', 'SIMRIA', 'Vila Nova de Poiares', 'Águas de Portugal', 'Águas do Mondego'], [qw(Para)]);
+testar(<<EOF, ['Associação Nacional de Municípios Portugueses', 'Câmara de Coimbra', 'Manuel Machado', 'Ministério do Ambiente', 'Miranda do Corvo', 'SIMLIS', 'SIMRIA', 'Vila Nova de Poiares', 'Águas de Portugal', 'Águas do Mondego'], ignorar => [qw(Para)]);
 Águas de Portugal tem tido "gestão ruinosa", acusa autarca de Coimbra.
 
 Manuel Machado é mais uma voz contra a reforma no sector das Águas que o Governo pretende levar a cabo.

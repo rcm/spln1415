@@ -1,0 +1,12 @@
+DEFINE pwd use Cwd; printf("%s\n",cwd)
+DEFINE pushd use Cwd; push @dirs, cwd; chdir ($_[0])
+DEFINE popd use Cwd; chdir (pop @dirs)
+
+pwd
+pushd /tmp
+pwd
+popd
+pwd
+push /tmp
+pwd
+p
